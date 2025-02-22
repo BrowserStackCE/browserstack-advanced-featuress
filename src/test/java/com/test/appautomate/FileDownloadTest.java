@@ -1,70 +1,49 @@
 package com.test.appautomate;
 
+import com.test.base.AndroidBaseTest;
 import com.utils.AppUtils;
-import io.appium.java_client.MobileElement;
-import io.appium.java_client.android.Activity;
-import io.appium.java_client.android.AndroidDriver;
+import io.appium.java_client.AppiumBy;
 import org.openqa.selenium.By;
-import org.openqa.selenium.NotFoundException;
-import org.openqa.selenium.remote.DesiredCapabilities;
-import org.openqa.selenium.support.ui.FluentWait;
-import org.openqa.selenium.support.ui.Wait;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
+import org.openqa.selenium.ScreenOrientation;
+import org.openqa.selenium.WebElement;
+import org.testng.Assert;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.time.Duration;
+import java.util.List;
 
-public class FileDownloadTest {
+import static java.util.stream.Collectors.toList;
+import static org.openqa.selenium.Keys.TAB;
+import static org.openqa.selenium.support.ui.ExpectedConditions.elementToBeClickable;
+import static org.openqa.selenium.support.ui.ExpectedConditions.presenceOfElementLocated;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
-    private static final String USERNAME = System.getenv("BROWSERSTACK_USERNAME");
-    private static final String ACCESS_KEY = System.getenv("BROWSERSTACK_ACCESS_KEY");
-    private static final String URL = "http://hub-cloud.browserstack.com/wd/hub";
-    private AndroidDriver<MobileElement> driver;
-
-    @BeforeSuite(alwaysRun = true)
-    public void setupApp() {
-        String appUrl = "https://www.browserstack.com/app-automate/sample-apps/android/WikipediaSample.apk";
-        AppUtils.uploadApp("AndroidDemoApp", appUrl);
-    }
-
-    @BeforeMethod(alwaysRun = true)
-    public void setup(Method m) throws MalformedURLException {
-        DesiredCapabilities caps = new DesiredCapabilities();
-        caps.setCapability("project", "BrowserStack Advanced Features");
-        caps.setCapability("build", "Advanced Features");
-        caps.setCapability("name", m.getName() + " - Google Pixel 3");
-
-        caps.setCapability("device", "Samsung Galaxy S22 Ultra");
-        caps.setCapability("os_version", "12.0");
-        caps.setCapability("app", "AndroidDemoApp");
-
-        caps.setCapability("browserstack.user", USERNAME);
-        caps.setCapability("browserstack.key", ACCESS_KEY);
-
-        driver = new AndroidDriver<>(new URL(URL), caps);
-    }
+public class FileDownloadTest extends AndroidBaseTest {
 
     @Test
-    public void searchWikipedia() throws IOException {
-        byte[] fileBase64 = driver.pullFile("/sdcard/Pictures/BrowserStack.jpg");
-        try (OutputStream stream = new FileOutputStream("target/BrowserStack.jpg")) {
-            stream.write(fileBase64);
-        }
-    }
+    public void searchWikipedia() {
+        driver.activateApp("com.android.chrome");
+        driver.rotate(ScreenOrientation.PORTRAIT);
+        wait.until(d -> d.getContextHandles().contains("WEBVIEW_chrome"));
+        driver.context("WEBVIEW_chrome");
 
-    @AfterMethod(alwaysRun = true)
-    public void tearDown() {
-        driver.executeScript("browserstack_executor: {\"action\": \"setSessionStatus\", \"arguments\": {\"status\": \"passed\"}}");
-        driver.quit();
+        driver.get("https://the-internet.herokuapp.com/download");
+        String fileName = driver.findElement(By.cssSelector("div.example > a")).getText();
+        driver.findElement(By.cssSelector("div.example > a")).click();
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) { }
+
+        byte[] fileBase64 = driver.pullFile("/sdcard/Download/" + fileName);
+        try (OutputStream stream = new FileOutputStream("target/" + fileName)) {
+            stream.write(fileBase64);
+        } catch (IOException e) {
+            Assert.fail("Unable to download file", e);
+        }
     }
 
 }

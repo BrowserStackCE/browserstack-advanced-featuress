@@ -1,0 +1,40 @@
+userName: BROWSERSTACK_USERNAME
+accessKey: BROWSERSTACK_ACCESS_KEY
+
+projectName: Allegion
+buildName: Sample Build
+
+platforms:
+  - os: Windows
+    osVersion: 10
+    browserName: Chrome
+    browserVersion: latest
+  - os: Windows
+    osVersion: 10
+    browserName: Chrome
+    browserVersion: latest-1
+  - os: Windows
+    osVersion: 10
+    browserName: Chrome
+    browserVersion: latest-2
+  - os: Windows
+    osVersion: 10
+    browserName: Chrome
+    browserVersion: latest-3
+  - os: Windows
+    osVersion: 10
+    browserName: Chrome
+    browserVersion: latest-4
+
+#browserstackLocal: true
+
+browserStackLocalOptions:
+  forceLocal: true
+
+debug: true
+networkLogs: true
+consoleLogs: verbose
+#geoLocation: US
+#testObservability: true
+#performance: report
+#accessibility: true

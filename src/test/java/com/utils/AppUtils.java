@@ -3,8 +3,13 @@ package com.utils;
 import io.restassured.authentication.PreemptiveBasicAuthScheme;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.filter.log.RequestLoggingFilter;
+import io.restassured.filter.log.ResponseLoggingFilter;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 
 import static io.restassured.RestAssured.*;
@@ -101,6 +106,94 @@ public final class AppUtils {
                 .header("Content-Type", "application/json")
                 .body("{\"networkProfile\":\"" + networkCondition + "\"}")
                 .put("sessions/" + sessionId + "/update_network.json");
+    }
+
+    public static List<String> getAllContexts(String sessionId) {
+        PreemptiveBasicAuthScheme authenticationScheme = new PreemptiveBasicAuthScheme();
+        authenticationScheme.setUserName(USERNAME);
+        authenticationScheme.setPassword(ACCESS_KEY);
+        requestSpecification = new RequestSpecBuilder()
+                .setBaseUri("https://hub.browserstack.com")
+                .setBasePath("wd/hub")
+                .setAuth(authenticationScheme)
+                .build();
+        responseSpecification = new ResponseSpecBuilder()
+                .expectStatusCode(200)
+                .build();
+        return given()
+                .get("session/" + sessionId + "/contexts")
+                .jsonPath()
+                .getList("value");
+    }
+
+    public static void switchContect(String sessionId, String context) {
+        PreemptiveBasicAuthScheme authenticationScheme = new PreemptiveBasicAuthScheme();
+        authenticationScheme.setUserName(USERNAME);
+        authenticationScheme.setPassword(ACCESS_KEY);
+        requestSpecification = new RequestSpecBuilder()
+                .setBaseUri("https://hub.browserstack.com")
+                .setBasePath("wd/hub")
+                .setAuth(authenticationScheme)
+                .build();
+        responseSpecification = new ResponseSpecBuilder()
+                .expectStatusCode(200)
+                .build();
+        given()
+                .header("Content-Type", "application/json")
+                .body("{\"name\":\"" + context + "\"}")
+                .post("session/" + sessionId + "/context");
+    }
+
+    public static byte[] pullFile(String sessionId, String filePath) {
+        PreemptiveBasicAuthScheme authenticationScheme = new PreemptiveBasicAuthScheme();
+        authenticationScheme.setUserName(USERNAME);
+        authenticationScheme.setPassword(ACCESS_KEY);
+        requestSpecification = new RequestSpecBuilder()
+                .setBaseUri("https://hub.browserstack.com")
+                .setBasePath("wd/hub")
+                .setAuth(authenticationScheme)
+                .addFilter(new RequestLoggingFilter())
+                .addFilter(new ResponseLoggingFilter())
+                .build();
+        responseSpecification = new ResponseSpecBuilder()
+                .expectStatusCode(200)
+                .build();
+        String base64String =  given()
+                .header("Content-Type", "application/json")
+                .body("{\"path\":\"" + filePath + "\"}")
+                .post("session/" + sessionId + "/appium/device/pull_file")
+                .jsonPath()
+                .getString("value");
+        return Base64.getDecoder().decode(base64String);
+    }
+
+    public static void pushFile(String sessionId, String sourceFilePath, String destinationFilePath) {
+        String data = "";
+        File file = new File(sourceFilePath);
+        try (FileInputStream fileInputStream = new FileInputStream(file)) {
+            byte[] fileBytes = new byte[(int) file.length()];
+            fileInputStream.read(fileBytes); // Read file data
+            data = Base64.getEncoder().encodeToString(fileBytes); // Encode to Base64
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        PreemptiveBasicAuthScheme authenticationScheme = new PreemptiveBasicAuthScheme();
+        authenticationScheme.setUserName(USERNAME);
+        authenticationScheme.setPassword(ACCESS_KEY);
+        requestSpecification = new RequestSpecBuilder()
+                .setBaseUri("https://hub.browserstack.com")
+                .setBasePath("wd/hub")
+                .setAuth(authenticationScheme)
+                .addFilter(new RequestLoggingFilter())
+                .addFilter(new ResponseLoggingFilter())
+                .build();
+        responseSpecification = new ResponseSpecBuilder()
+                .expectStatusCode(200)
+                .build();
+        given()
+                .header("Content-Type", "application/json")
+                .body("{\"path\":\"" + destinationFilePath + "\", \"data\":\"" + data + "\"}")
+                .post("session/" + sessionId + "/appium/device/push_file");
     }
 
 }

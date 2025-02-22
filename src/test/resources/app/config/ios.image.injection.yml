@@ -1,0 +1,16 @@
+userName: BROWSERSTACK_USERNAME
+accessKey: BROWSERSTACK_ACCESS_KEY
+
+projectName: BrowserStack Advanced Features
+buildName: Advanced Features
+buildIdentifier: '#${BUILD_NUMBER}'
+
+framework: testng
+source: testng:appium-sample-sdk:v1.1
+
+app: src/test/resources/app/data/PhotoCapture.ipa
+platforms:
+  - deviceName: iPhone 13
+    osVersion: 15
+
+enableCameraImageInjection: true

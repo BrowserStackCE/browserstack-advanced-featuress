@@ -1,82 +1,36 @@
 package com.test.appautomate;
 
+import com.test.base.AndroidBaseTest;
 import com.utils.AppUtils;
-import io.appium.java_client.MobileElement;
-import io.appium.java_client.android.AndroidDriver;
-import org.openqa.selenium.NotFoundException;
+import io.appium.java_client.AppiumBy;
 import org.openqa.selenium.OutputType;
-import org.openqa.selenium.remote.DesiredCapabilities;
-import org.openqa.selenium.support.ui.FluentWait;
-import org.openqa.selenium.support.ui.Wait;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
+import org.openqa.selenium.WebElement;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.time.Duration;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
 import static org.testng.Assert.assertTrue;
 
-public class TakeScreenshotsTest {
-
-    private static final String USERNAME = System.getenv("BROWSERSTACK_USERNAME");
-    private static final String ACCESS_KEY = System.getenv("BROWSERSTACK_ACCESS_KEY");
-    private static final String URL = "http://hub-cloud.browserstack.com/wd/hub";
-    private AndroidDriver<MobileElement> driver;
-
-    @BeforeSuite(alwaysRun = true)
-    public void setupApp() {
-        String appUrl = "https://www.browserstack.com/app-automate/sample-apps/android/WikipediaSample.apk";
-        AppUtils.uploadApp("AndroidDemoApp", appUrl);
-    }
-
-    @BeforeMethod(alwaysRun = true)
-    public void setup(Method m) throws MalformedURLException {
-        DesiredCapabilities caps = new DesiredCapabilities();
-        caps.setCapability("project", "BrowserStack Advanced Features");
-        caps.setCapability("build", "Advanced Features");
-        caps.setCapability("name", m.getName() + " - Google Pixel 3");
-
-        caps.setCapability("device", "Samsung Galaxy S22 Ultra");
-        caps.setCapability("os_version", "12.0");
-        caps.setCapability("app", "AndroidDemoApp");
-
-        caps.setCapability("browserstack.user", USERNAME);
-        caps.setCapability("browserstack.key", ACCESS_KEY);
-
-        driver = new AndroidDriver<>(new URL(URL), caps);
-    }
+public class TakeScreenshotsTest extends AndroidBaseTest {
 
     @Test
     public void searchWikipedia() throws IOException {
-        Wait<AndroidDriver<MobileElement>> wait = new FluentWait<>(driver)
-                .withTimeout(Duration.ofSeconds(10))
-                .ignoring(NotFoundException.class);
-        driver.findElementByAccessibilityId("Search Wikipedia").click();
-        MobileElement insertTextElement = wait.until(d -> d.findElementById("org.wikipedia.alpha:id/search_src_text"));
+        driver.findElement(AppiumBy.accessibilityId("Search Wikipedia")).click();
+        WebElement insertTextElement = wait.until(d -> d.findElement(AppiumBy.id("org.wikipedia.alpha:id/search_src_text")));
         insertTextElement.sendKeys("BrowserStack");
-        wait.until(d -> d.findElementByClassName("android.widget.ListView").isDisplayed());
-        List<String> companyNames = driver.findElementsByClassName("android.widget.TextView")
-                .stream().map(MobileElement::getText).collect(toList());
+        wait.until(d -> d.findElement(AppiumBy.className("android.widget.ListView")));
+        List<String> companyNames = driver.findElements(AppiumBy.className("android.widget.TextView"))
+                .stream().map(WebElement::getText).collect(toList());
         File scrFile = driver.getScreenshotAs(OutputType.FILE);
         Files.copy(scrFile.toPath(), Paths.get("target/screenshot.png"), StandardCopyOption.REPLACE_EXISTING);
         assertTrue(companyNames.contains("BrowserStack"), "Company is not present in the list");
-    }
-
-    @AfterMethod(alwaysRun = true)
-    public void tearDown() {
-        driver.executeScript("browserstack_executor: {\"action\": \"setSessionStatus\", \"arguments\": {\"status\": \"passed\"}}");
-        driver.quit();
     }
 
 }

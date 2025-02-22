@@ -1,0 +1,15 @@
+userName: BROWSERSTACK_USERNAME
+accessKey: BROWSERSTACK_ACCESS_KEY
+
+projectName: JLP
+buildName: Sample Build
+
+platforms:
+  - deviceName: iPhone 14
+    osVersion: 16
+
+app: JLPApp
+debug: true
+networkLogs: true
+testObservability: true
+appProfiling: true
